@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_storage_permision_error">External storage permision needs to be granted</string>
+    <string name="camera_permision_error">Camera permission needs to be granted</string>
+</resources>

@@ -12,12 +12,19 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import java.io.File
-import java.lang.NullPointerException
 
-class ImagePicker(
-    private val activity: AppCompatActivity? = null,
-    private val fragment: Fragment? = null
-) : SendImageUri {
+class ImagePicker {
+    private var activity: AppCompatActivity? = null
+    private var fragment: Fragment? = null
+
+    constructor(activity: AppCompatActivity) {
+        this.activity = activity
+    }
+
+    constructor(fragment: Fragment) {
+        this.fragment = fragment
+    }
+
     init {
         if (activity == null && fragment == null) {
             throw NullPointerException("Make sure that either Activity or Fragment isn't empty when initializing ImagePicker")
@@ -26,37 +33,38 @@ class ImagePicker(
 
     private lateinit var takenImageUri: Uri
     private lateinit var imageResult: ImageResult
+    private var callback: ((String?, Throwable?) -> Unit)? = null
+
     private val context = activity?.applicationContext ?: fragment?.requireContext()!!
 
 
-    override fun pickFromStorage(imageResult: ImageResult) {
-        this.imageResult = imageResult
-
+    private fun pickWithPermissions(perm: String) {
         if (ActivityCompat.shouldShowRequestPermissionRationale(
                 (activity ?: fragment!!.requireActivity()),
-                Manifest.permission.READ_EXTERNAL_STORAGE
+                perm
             )
         ) {
-            showWhyPermissionNeeded(Manifest.permission.READ_EXTERNAL_STORAGE, "Storage")
-        } else {
-            storagePermission?.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-
-    }
-
-    override fun takeFromCamera(imageResult: ImageResult) {
-        this.imageResult = imageResult
-        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                (activity ?: fragment!!.requireActivity()),
-                Manifest.permission.CAMERA
+            showWhyPermissionNeeded(
+                perm,
+                if (perm == Manifest.permission.READ_EXTERNAL_STORAGE) "Storage" else "Camera"
             )
-        ) {
-            showWhyPermissionNeeded(Manifest.permission.CAMERA, "Camera")
         } else {
-            cameraPermission?.launch(Manifest.permission.CAMERA)
+            storagePermission?.launch(perm)
         }
-
     }
+
+    fun pickFromStorage(callback: (String?, Throwable?) -> Unit) {
+        this.callback = callback
+        pickWithPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
+
+
+    // Using higher order functions to avoid Memory Leaks with Interfaces
+    fun takeFromCamera(callback: (String?, Throwable?) -> Unit) {
+        this.callback = callback
+        pickWithPermissions(Manifest.permission.CAMERA)
+    }
+
 
     //Camera permision
     private
@@ -66,7 +74,11 @@ class ImagePicker(
             granted -> {
                 launchCamera()
             }
-            else -> imageResult.onFailure("Camera Permission denied")
+            else -> this.callback?.let {
+                val message = (activity?.applicationContext
+                    ?: fragment?.requireContext())?.getString(R.string.camera_permision_error)
+                it(null, Error(message))
+            }
 
         }
     }
@@ -80,8 +92,11 @@ class ImagePicker(
                 launchGallery()
             }
 
-            else -> imageResult.onFailure("Storage Permission denied")
-
+            else -> this.callback?.let {
+                val message = (activity?.applicationContext
+                    ?: fragment?.requireContext())?.getString(R.string.external_storage_permision_error)
+                it(null, Error(message))
+            }
         }
     }
 

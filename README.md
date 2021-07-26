@@ -38,76 +38,20 @@ Example in code, Kotlin:
    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 	 //activity
-	 imagePicker = ImagePicker(activity = this)
+	 imagePicker = ImagePicker(this)
 	 
 	 //fragment
-        imagePicker = ImagePicker(fragment = this)
+        imagePicker = ImagePicker(this)
     }
 
     //Camera
-            imagePicker.takeFromCamera(object : ImageResult {
-                override fun onFailure(reason: String) {
-                    Toast.makeText(this, reason, Toast.LENGTH_LONG).show()
-                }
-
-                override fun onSuccess(uri: Uri) {
-                    imageView.setImageURI(uri)
-                }
-            })
+            imagePicker.takeFromCamera { uri, err -> 
+                
+            }
      
      //Gallery
-            imagePicker.pickFromStorage(object : ImageResult {
-                override fun onFailure(reason: String) {
-                    Toast.makeText(this, reason, Toast.LENGTH_LONG).show()
-                }
+            imagePicker.pickFromStorage { uri, err ->
 
-                override fun onSuccess(uri: Uri) {
-                    imageView.setImageURI(uri)
-                }
-            })
+            }
         
-```
-Example in code,Java:
-
-```java
-  ImagePicker imagePicker;
-    
-    //Make sure that you initialize it at Oncreate
-    @Override
-     protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            //activity
-           imagePicker = new ImagePicker(this,null);
- 
-         //fragment
-          imagePicker = new ImagePicker(null, this);
-     }
-
-       
-       //Gallery
-       imagePicker.pickFromStorage(new ImageResult() {
-           @Override
-           public void onSuccess(@NotNull Uri uri) {
-               imageView.setImageURI(uri);
-           }
-
-           @Override
-           public void onFailure(@NotNull String s) {
-
-           }
-       });
-       
-       //Camera
-       imagePicker.takeFromCamera(new ImageResult() {
-           @Override
-           public void onSuccess(@NotNull Uri uri) {
-               imageView.setImageURI(uri);
-           }
-
-           @Override
-           public void onFailure(@NotNull String s) {
-
-           }
-       });
-
 ```
